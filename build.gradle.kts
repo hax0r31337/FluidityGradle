@@ -2,11 +2,13 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "1.7.20"
-    `java-gradle-plugin`
+    id("java-gradle-plugin")
+    id("maven-publish")
+    id("com.gradle.plugin-publish") version "1.0.0"
 }
 
 group = "me.yuugiri.fluiditygradle"
-version = "1.0-SNAPSHOT"
+version = "1.0.0"
 
 repositories {
     gradlePluginPortal()
@@ -29,7 +31,15 @@ gradlePlugin {
     plugins {
         create("FluidityGradle") {
             id = "me.yuugiri.fluiditygradle"
+            displayName = "Fluidity Gradle"
+            description = "A gradle plugin for develop MinecraftForge 1.8.9 mods. "
             implementationClass = "me.yuugiri.fluiditygradle.FluidityGradlePlugin"
         }
     }
+}
+
+pluginBundle {
+    website = "https://github.com/mccheatz/"
+    vcsUrl = "https://github.com/mccheatz/FluidityGradle.git"
+    tags = listOf("minecraft", "minecraftforge")
 }
