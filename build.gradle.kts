@@ -2,9 +2,9 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "1.7.20"
-    id("java-gradle-plugin")
+//    id("java-gradle-plugin")
     id("maven-publish")
-    id("com.gradle.plugin-publish") version "1.0.0"
+//    id("com.gradle.plugin-publish") version "1.0.0"
 }
 
 group = "me.yuugiri.fluiditygradle"
@@ -27,19 +27,31 @@ tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "1.8"
 }
 
-gradlePlugin {
-    plugins {
-        create("FluidityGradle") {
-            id = "me.yuugiri.fluiditygradle"
-            displayName = "Fluidity Gradle"
-            description = "A gradle plugin for develop MinecraftForge 1.8.9 mods. "
-            implementationClass = "me.yuugiri.fluiditygradle.FluidityGradlePlugin"
+//gradlePlugin {
+//    plugins {
+//        create("FluidityGradle") {
+//            id = "me.yuugiri.fluiditygradle"
+//            displayName = "Fluidity Gradle"
+//            description = "A gradle plugin for develop MinecraftForge 1.8.9 mods. "
+//            implementationClass = "me.yuugiri.fluiditygradle.FluidityGradlePlugin"
+//        }
+//    }
+//}
+
+publishing {
+    publications {
+        register<MavenPublication>("maven") {
+            groupId = project.group as String
+            artifactId = "FluidityGradle"
+            version = project.version as String
+
+            from(components["java"])
         }
     }
 }
 
-pluginBundle {
-    website = "https://github.com/mccheatz/"
-    vcsUrl = "https://github.com/mccheatz/FluidityGradle.git"
-    tags = listOf("minecraft", "minecraftforge")
-}
+//pluginBundle {
+//    website = "https://github.com/mccheatz/"
+//    vcsUrl = "https://github.com/mccheatz/FluidityGradle.git"
+//    tags = listOf("minecraft", "minecraftforge")
+//}
