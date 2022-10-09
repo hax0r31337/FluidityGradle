@@ -3,6 +3,9 @@ package me.yuugiri.fluiditygradle.tasks
 import me.yuugiri.fluiditygradle.asm.ClassDump
 import me.yuugiri.fluiditygradle.minecraft.MinecraftAssetsDownloader
 import me.yuugiri.fluiditygradle.minecraft.MinecraftVersion
+import me.yuugiri.fluiditygradle.utils.cacheDir
+import me.yuugiri.fluiditygradle.utils.minecraftJar
+import me.yuugiri.fluiditygradle.utils.resourceCached
 import org.gradle.api.Project
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
@@ -10,9 +13,6 @@ import org.gradle.internal.jvm.Jvm
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import org.w3c.dom.Node
-import me.yuugiri.fluiditygradle.utils.cacheDir
-import me.yuugiri.fluiditygradle.utils.minecraftJar
-import me.yuugiri.fluiditygradle.utils.resourceCached
 import java.io.File
 import java.io.FileOutputStream
 import java.util.*

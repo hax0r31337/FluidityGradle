@@ -1,7 +1,7 @@
 package me.yuugiri.fluiditygradle.remap
 
-import net.md_5.specialsource.AccessMap
 import me.yuugiri.fluiditygradle.utils.readCsvMapping
+import net.md_5.specialsource.AccessMap
 import java.io.Reader
 
 class Remapper {

@@ -1,19 +1,16 @@
-//package me.yuugiri.fluiditygradle.tasks
 
-import me.yuugiri.fluiditygradle.minecraft.MinecraftVersion
+3import me.yuugiri.fluiditygradle.minecraft.MinecraftVersion
+import me.yuugiri.fluiditygradle.remap.ErroringRemappingAccessMap
+import me.yuugiri.fluiditygradle.utils.cacheDir
+import me.yuugiri.fluiditygradle.utils.generateAndSaveSrgMapping
+import me.yuugiri.fluiditygradle.utils.minecraftJar
+import me.yuugiri.fluiditygradle.utils.resourceCached
 import net.md_5.specialsource.Jar
 import net.md_5.specialsource.JarMapping
 import net.md_5.specialsource.JarRemapper
 import net.md_5.specialsource.RemapperProcessor
 import org.gradle.api.Project
 import org.gradle.api.file.ConfigurableFileCollection
-import org.gradle.api.tasks.TaskAction
-import me.yuugiri.fluiditygradle.remap.ErroringRemappingAccessMap
-import me.yuugiri.fluiditygradle.tasks.GroupedTask
-import me.yuugiri.fluiditygradle.utils.cacheDir
-import me.yuugiri.fluiditygradle.utils.generateAndSaveSrgMapping
-import me.yuugiri.fluiditygradle.utils.minecraftJar
-import me.yuugiri.fluiditygradle.utils.resourceCached
 import java.io.BufferedReader
 import java.io.File
 

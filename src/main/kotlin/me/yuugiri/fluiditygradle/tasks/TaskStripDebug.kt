@@ -1,11 +1,11 @@
 package me.yuugiri.fluiditygradle.tasks
 
+import me.yuugiri.fluiditygradle.utils.toBytes
+import me.yuugiri.fluiditygradle.utils.toClassNode
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import org.objectweb.asm.tree.*
-import me.yuugiri.fluiditygradle.utils.toBytes
-import me.yuugiri.fluiditygradle.utils.toClassNode
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File

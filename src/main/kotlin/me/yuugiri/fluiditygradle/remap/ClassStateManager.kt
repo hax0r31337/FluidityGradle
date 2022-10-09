@@ -1,7 +1,7 @@
 package me.yuugiri.fluiditygradle.remap
 
-import org.objectweb.asm.tree.ClassNode
 import me.yuugiri.fluiditygradle.utils.toClassNode
+import org.objectweb.asm.tree.ClassNode
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
