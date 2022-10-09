@@ -330,7 +330,7 @@ public class ClassDump implements Opcodes {
             mv.visitCode();
             mv.visitTypeInsn(NEW, "org/objectweb/asm/ClassWriter");
             mv.visitInsn(DUP);
-            mv.visitInsn(ICONST_1);
+            mv.visitInsn(ICONST_0);
             mv.visitMethodInsn(INVOKESPECIAL, "org/objectweb/asm/ClassWriter", "<init>", "(I)V", false);
             mv.visitVarInsn(ASTORE, 2);
             mv.visitVarInsn(ALOAD, 1);
