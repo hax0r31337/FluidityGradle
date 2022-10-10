@@ -1,5 +1,5 @@
 
-3import me.yuugiri.fluiditygradle.minecraft.MinecraftVersion
+import me.yuugiri.fluiditygradle.minecraft.MinecraftVersion
 import me.yuugiri.fluiditygradle.remap.ErroringRemappingAccessMap
 import me.yuugiri.fluiditygradle.utils.cacheDir
 import me.yuugiri.fluiditygradle.utils.generateAndSaveSrgMapping
