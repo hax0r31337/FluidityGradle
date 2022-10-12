@@ -50,6 +50,7 @@ fun generateReobfuscateMapping(project: Project): Pair<Map<String, String>, Map<
                 val fd = args[2]
                 val klass = fd.substring(0, fd.lastIndexOf('/'))
                 val field = fd.substring(fd.lastIndexOf('/')+1)
+                resultFields["$klass/${fields[field]}"] = field
                 csm.searchSuperClasses(klass).forEach { klass ->
                     resultFields["$klass/${fields[field]}"] = field
                 }
@@ -58,6 +59,7 @@ fun generateReobfuscateMapping(project: Project): Pair<Map<String, String>, Map<
                 val md = args[3]
                 val klass = md.substring(0, md.lastIndexOf('/'))
                 val method = md.substring(md.lastIndexOf('/')+1)
+                resultMethods["$klass/${methods[method]}${args[4]}"] = method
                 csm.searchSuperClasses(klass).forEach { klass ->
                     resultMethods["$klass/${methods[method]}${args[4]}"] = method
                 }
