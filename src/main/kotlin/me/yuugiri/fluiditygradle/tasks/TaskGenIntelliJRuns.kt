@@ -71,17 +71,12 @@ open class TaskGenIntelliJRuns : GroupedTask() {
 
         // prepare for hot reobfuscate
         val agentJar = File(cacheDir, "agent/agent.jar").also {
-            if (!it.exists()) {
-                it.parentFile.mkdirs()
-                genAgentJar(it)
-            }
+            it.parentFile.mkdirs()
+            it.writeBytes(TaskGenIntelliJRuns::class.java.classLoader.getResourceAsStream("fluidity/agent.jar").readBytes())
         }
         val mainJar = File(cacheDir, "agent/main.jar").also {
-            if (!it.exists()) {
-                genMainJar(it, version.getMainClass(), agentJar)
-            }
+            genMainJar(it, version.getMainClass(), agentJar)
         }
-
 
 //         inject run configuration into config file
         val docFactory = DocumentBuilderFactory.newInstance()
@@ -123,30 +118,13 @@ open class TaskGenIntelliJRuns : GroupedTask() {
         zos.write("Manifest-Version: 1.0".toByteArray(Charsets.UTF_8))
         zos.closeEntry()
 
-        zos.putNextEntry(ZipEntry("me/yuugiri/agent/AgentLoader.class"))
-        zos.write(ClassDump.dump(targetMain.replace('.', '/'), agentJar.canonicalPath))
-        zos.closeEntry()
-
-        zos.close()
-    }
-
-    private fun genAgentJar(jarFile: File) {
-        val zos = ZipOutputStream(FileOutputStream(jarFile))
-
-        zos.putNextEntry(ZipEntry("META-INF/MANIFEST.MF"))
-        zos.write("""
-Manifest-Version: 1.0
-Agent-Class: me.yuugiri.agent.AgentTransformer
-        """.trimIndent().toByteArray(Charsets.UTF_8))
-        zos.closeEntry()
-
         // generate remap mapping
         val cacheDir = cacheDir(project)
-        val mapping = File(cacheDir, "1.8.9-remap.dat")
+        val mapping = File(cacheDir, "1.8.9-remap-v2.dat")
         if (!mapping.exists()) generateReobfuscateMapping(project)
 
-        zos.putNextEntry(ZipEntry("me/yuugiri/agent/AgentTransformer.class"))
-        zos.write(ClassDump.dumpTransformer(mapping.canonicalPath))
+        zos.putNextEntry(ZipEntry("me/yuugiri/agent/AgentLoader.class"))
+        zos.write(ClassDump.dump(targetMain.replace('.', '/'), agentJar.canonicalPath, mapping.canonicalPath))
         zos.closeEntry()
 
         zos.close()

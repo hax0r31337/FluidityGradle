@@ -182,7 +182,6 @@ open class TaskReobfuscateArtifact : GroupedTask() {
         method.instructions.forEach { insn ->
             if (insn is MethodInsnNode) {
                 getMergedMap(insn.owner, classMngr)["${insn.name}${insn.desc}"]?.also {
-//                    println(it)
                     insn.name = it
                 }
             } else if (insn is FieldInsnNode) {
