@@ -22,3 +22,10 @@ fun generateAndSaveSrgMapping(cacheDir: File, outFile: File) {
         .applyWarppedSrg(srgMapping.reader(Charsets.UTF_8), fieldsCsvMapping.reader(Charsets.UTF_8), methodsCsvMapping.reader(Charsets.UTF_8))
         .srgMapping(), Charsets.UTF_8)
 }
+
+fun getRandomString(length: Int) : String {
+    val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
+    return (1..length)
+        .map { allowedChars.random() }
+        .joinToString("")
+}

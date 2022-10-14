@@ -4,6 +4,7 @@ import me.yuugiri.fluiditygradle.asm.ClassDump
 import me.yuugiri.fluiditygradle.minecraft.MinecraftAssetsDownloader
 import me.yuugiri.fluiditygradle.minecraft.MinecraftVersion
 import me.yuugiri.fluiditygradle.utils.cacheDir
+import me.yuugiri.fluiditygradle.utils.getRandomString
 import me.yuugiri.fluiditygradle.utils.minecraftJar
 import me.yuugiri.fluiditygradle.utils.resourceCached
 import org.gradle.api.Project
@@ -88,7 +89,7 @@ open class TaskGenIntelliJRuns : GroupedTask() {
         val document = docBuilder.parse(file)
 
         val gameDir = File(project.rootDir, "run").apply { mkdirs() }
-        val args = version.getArguments(mapOf("auth_player_name" to "FluidityUser",
+        val args = version.getArguments(mapOf("auth_player_name" to "Fluidity_" + getRandomString(7),
             "auth_uuid" to UUID.randomUUID().toString(),
             "auth_access_token" to "NULL",
             "version_name" to version.getVersion(),

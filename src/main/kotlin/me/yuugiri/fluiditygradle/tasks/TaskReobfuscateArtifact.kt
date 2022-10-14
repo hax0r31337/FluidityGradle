@@ -1,35 +1,40 @@
 package me.yuugiri.fluiditygradle.tasks
 
-import me.yuugiri.fluiditygradle.remap.ClassStateManager
-import me.yuugiri.fluiditygradle.utils.cacheDir
-import me.yuugiri.fluiditygradle.utils.minecraftJar
-import me.yuugiri.fluiditygradle.utils.readCsvMapping
-import me.yuugiri.fluiditygradle.utils.resourceCached
+import me.yuugiri.fluiditygradle.remap.ClassInheritanceManager
+import me.yuugiri.fluiditygradle.utils.*
 import minecraftDep
 import org.gradle.api.Project
 import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.TaskAction
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.MethodNode
+import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
 
 
-fun generateReobfuscateMapping(project: Project): Pair<Map<String, String>, Map<String, String>> {
+fun generateReobfuscateMapping(project: Project): Map<String, Map<String, String>> {
     val cacheDir = cacheDir(project)
-    val resultFields = mutableMapOf<String, String>()
-    val resultMethods = mutableMapOf<String, String>()
-    val mapping = File(cacheDir, "1.8.9-remap.dat")
+    val result = mutableMapOf<String, MutableMap<String, String>>()
+    val mapping = File(cacheDir, "1.8.9-remap-v2.dat")
     if (mapping.exists()) {
+        var nowClass = ""
         mapping.readLines(Charsets.UTF_8).forEach {
             val args = it.split(" ")
-            if (args.size != 3) return@forEach
-            when (args[0]) {
-                "F" -> resultFields[args[1]] = args[2]
-                "M" -> resultMethods[args[1]] = args[2]
+            if (args[0].startsWith("C:")) {
+                result[args[1]] = mutableMapOf()
+                nowClass = args[1]
+            } else {
+                result[nowClass]!![args[0]] = args[1]
             }
         }
-        return resultFields to resultMethods
+        return result
     }
 
     project.logger.info("Generating re-obfuscate mapping cache...")
@@ -40,28 +45,31 @@ fun generateReobfuscateMapping(project: Project): Pair<Map<String, String>, Map<
 
     val fields = readCsvMapping(fieldsCsvMapping.reader(Charsets.UTF_8))
     val methods = readCsvMapping(methodsCsvMapping.reader(Charsets.UTF_8))
-    val csm = ClassStateManager(minecraftJar(project).also {
+    val csm = ClassInheritanceManager(minecraftJar(project).also {
         if (!it.exists()) minecraftDep(project)
     })
     srgMapping.readLines(Charsets.UTF_8).forEach {
         val args = it.split(" ")
+        fun classMap(klass: String) = result[klass] ?: mutableMapOf<String, String>().also { result[klass] = it }
         when (args[0]) {
             "FD:" -> {
                 val fd = args[2]
                 val klass = fd.substring(0, fd.lastIndexOf('/'))
                 val field = fd.substring(fd.lastIndexOf('/')+1)
-                resultFields["$klass/${fields[field]}"] = field
-                csm.searchSuperClasses(klass).forEach { klass ->
-                    resultFields["$klass/${fields[field]}"] = field
+                val str = "${fields[field]}"
+                classMap(klass)[str] = field
+                csm.searchChildTree(klass).forEach { klass ->
+                    classMap(klass)[str] = field
                 }
             }
             "MD:" -> {
                 val md = args[3]
                 val klass = md.substring(0, md.lastIndexOf('/'))
                 val method = md.substring(md.lastIndexOf('/')+1)
-                resultMethods["$klass/${methods[method]}${args[4]}"] = method
-                csm.searchSuperClasses(klass).forEach { klass ->
-                    resultMethods["$klass/${methods[method]}${args[4]}"] = method
+                val str = "${methods[method]}${args[4]}"
+                classMap(klass)[str] = method
+                csm.searchChildTree(klass).forEach { klass ->
+                    classMap(klass)[str] = method
                 }
             }
         }
@@ -70,44 +78,122 @@ fun generateReobfuscateMapping(project: Project): Pair<Map<String, String>, Map<
     csm.clear()
 
     val sb = StringBuilder()
-    resultFields.forEach { (s, s2) ->
-        sb.append("F ").append(s).append(' ').append(s2).append('\n')
-    }
-    resultMethods.forEach { (s, s2) ->
-        sb.append("M ").append(s).append(' ').append(s2).append('\n')
+    result.forEach { (klass, info) ->
+        sb.append("C: $klass\n")
+        info.forEach { (orig, mapped) ->
+            sb.append("$orig $mapped\n")
+        }
     }
     mapping.writeText(sb.toString(), Charsets.UTF_8)
 
-    return resultFields to resultMethods
+    return result
 }
 
-fun reobfuscateClass(klass: ClassNode, map: Pair<Map<String, String>, Map<String, String>>) {
-    klass.methods.forEach {
-        reobfuscateMethod(it, map)
-    }
-}
-
-private fun reobfuscateMethod(method: MethodNode, map: Pair<Map<String, String>, Map<String, String>>) {
-    method.instructions.forEach { insn ->
-        if (insn is MethodInsnNode) {
-            val id = "${insn.owner}/${insn.name}${insn.desc}"
-            map.second[id]?.let {
-                insn.name = it
-            }
-        } else if (insn is FieldInsnNode) {
-            val id = "${insn.owner}/${insn.name}"
-            map.first[id]?.let {
-                insn.name = it
-            }
-        }
-    }
-}
-
-
-open class TaskReobfuscateArtifact : TaskClassPatching() {
+open class TaskReobfuscateArtifact : GroupedTask() {
 
     @get:Internal
     val mapping by lazy { generateReobfuscateMapping(project) }
 
-    override val patcher: (ClassNode) -> Unit = { reobfuscateClass(it, mapping) }
+    @TaskAction
+    fun execute() {
+        val rootDir = File(project.buildDir, "libs")
+        rootDir.listFiles()?.forEach {
+            if (it.name.endsWith(".jar")) {
+                logger.info("Patching ${it.absolutePath}...")
+                patchJar(it)
+            }
+        }
+    }
+
+    private fun patchJar(file: File) {
+        val resources = mutableMapOf<String, ByteArray>()
+        val classes = mutableListOf<ByteArray>()
+        val classMngr = ClassInheritanceManager()
+
+        // read jar data
+        val jis = ZipInputStream(FileInputStream(file))
+        val buffer = ByteArray(1024)
+        while (true) {
+            val entry = jis.nextEntry ?: break
+            if (entry.isDirectory) continue
+            val bos = ByteArrayOutputStream()
+            var n: Int
+            while (jis.read(buffer).also { n = it } != -1) {
+                bos.write(buffer, 0, n)
+            }
+            bos.close()
+            val body = bos.toByteArray()
+            if (entry.name.endsWith(".class")) {
+                classMngr.addClass(toClassNode(body))
+                classes.add(body)
+            } else {
+                resources[entry.name] = body
+            }
+        }
+        jis.close()
+
+        val jos = ZipOutputStream(FileOutputStream(file))
+        resources.forEach { (name, bytes) ->
+            jos.putNextEntry(ZipEntry(name))
+            jos.write(bytes)
+            jos.closeEntry()
+        }
+        resources.clear()
+        classes.forEach {
+            val klass = toClassNode(it)
+            reobfuscateClass(klass, classMngr)
+            additionalRuns(klass)
+
+            jos.putNextEntry(ZipEntry(klass.name+".class"))
+            jos.write(toBytes(klass))
+            jos.closeEntry()
+        }
+        mergedMaps.clear()
+        classMngr.clear()
+        jos.close()
+    }
+
+    private val mergedMaps = mutableMapOf<String, MergedMap<String, String>?>()
+    private val emptyMap = MergedMap<String, String>(emptyList())
+
+    private fun getMergedMap(name: String, classMngr: ClassInheritanceManager): MergedMap<String, String> {
+        if(mergedMaps.containsKey(name)) {
+            return mergedMaps[name] ?: emptyMap
+        }
+        val parents = classMngr.searchParentTree(name).mapNotNull { mapping[it] }
+        val mergedMap = if (parents.isNotEmpty()) {
+            MergedMap(parents)
+        } else null
+        mergedMaps[name] = mergedMap
+        return mergedMap ?: emptyMap
+    }
+
+    private fun reobfuscateClass(klass: ClassNode, classMngr: ClassInheritanceManager) {
+        val mergedMap = getMergedMap(klass.name, classMngr)
+        klass.methods.forEach {
+            mergedMap["${it.name}${it.desc}"]?.also { str ->
+                it.name = str
+            }
+            reobfuscateMethod(it, classMngr)
+        }
+    }
+
+    private fun reobfuscateMethod(method: MethodNode, classMngr: ClassInheritanceManager) {
+        method.instructions.forEach { insn ->
+            if (insn is MethodInsnNode) {
+                getMergedMap(insn.owner, classMngr)["${insn.name}${insn.desc}"]?.also {
+//                    println(it)
+                    insn.name = it
+                }
+            } else if (insn is FieldInsnNode) {
+                getMergedMap(insn.owner, classMngr)[insn.name]?.also {
+                    insn.name = it
+                }
+            }
+        }
+    }
+
+    protected open fun additionalRuns(klass: ClassNode) {
+
+    }
 }

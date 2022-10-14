@@ -45,9 +45,8 @@ open class TaskStripDebug : TaskClassPatching() {
 
 open class TaskStripDebugAndReobfuscate : TaskReobfuscateArtifact() {
 
-    override val patcher: (ClassNode) -> Unit = {
-        patchClass(it)
-        reobfuscateClass(it, mapping)
+    override fun additionalRuns(klass: ClassNode) {
+        patchClass(klass)
     }
 }
 

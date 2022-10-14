@@ -23,7 +23,7 @@ fun minecraftDep(project: Project, vararg accessTransformer: String): String {
         val version = MinecraftVersion(resourceCached(cacheDir, "versions/1.8.9.json", "https://launchermeta.mojang.com/v1/packages/d546f1707a3f2b7d034eece5ea2e311eda875787/1.8.9.json"))
         val srgMapping = File(cacheDir, "1.8.9-mcp.srg").also { generateAndSaveSrgMapping(cacheDir, it) }
 
-        val accessMap = ErroringRemappingAccessMap() // TODO: consider use original AccessMap when csv support is unused
+        val accessMap = ErroringRemappingAccessMap()
         accessTransformer.forEach { accessMap.loadAccessTransformer(File(project.rootDir, it)) }
         val input = Jar.init(version.getJars(cacheDir))
         val mapping = JarMapping()
