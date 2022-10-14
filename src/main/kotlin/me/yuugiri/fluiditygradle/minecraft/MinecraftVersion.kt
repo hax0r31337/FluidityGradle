@@ -84,6 +84,20 @@ class MinecraftVersion(versionJson: File) {
         return jars
     }
 
+    fun getJars(cacheDir: File, expect: String): List<File> {
+        val jars = mutableListOf<File>()
+
+        jars.add(resourceCached(cacheDir, "versions/1.8.9.jar", this.getClientUrl()))
+        this.getLibraries().forEach { lib ->
+            lib.files.forEach forEach1@{
+                if (it.path.contains(expect)) return@forEach1
+                jars.add(resourceCached(cacheDir, "libraries/${it.path}", it.url))
+            }
+        }
+
+        return jars
+    }
+
     fun extractJars(cacheDir: File, extractDir: File) {
         this.getLibraries().filter { it.needExtract && it.extractExcludes.isNotEmpty() }.forEach { lib ->
             lib.files.forEach {

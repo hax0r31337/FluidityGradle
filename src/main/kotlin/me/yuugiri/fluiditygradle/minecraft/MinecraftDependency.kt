@@ -20,12 +20,12 @@ fun minecraftDep(project: Project, vararg accessTransformer: String): String {
     val minecraftJar = minecraftJar(project)
     if (!minecraftJar.exists()) {
         val cacheDir = cacheDir(project)
-        val version = MinecraftVersion(resourceCached(cacheDir, "versions/1.8.9.json", "https://launchermeta.mojang.com/v1/packages/d546f1707a3f2b7d034eece5ea2e311eda875787/1.8.9.json"))
+        val version = MinecraftVersion(resourceCached(cacheDir, "versions/1.8.9-forge1.8.9-11.15.1.2318-1.8.9.json", "https://ayanoyuugiri.github.io/resources/minecraft/1.8.9-forge1.8.9-11.15.1.2318-1.8.9.json"))
         val srgMapping = File(cacheDir, "1.8.9-mcp.srg").also { generateAndSaveSrgMapping(cacheDir, it) }
 
         val accessMap = ErroringRemappingAccessMap()
         accessTransformer.forEach { accessMap.loadAccessTransformer(File(project.rootDir, it)) }
-        val input = Jar.init(version.getJars(cacheDir))
+        val input = Jar.init(version.getJars(cacheDir, "scala-lang"))
         val mapping = JarMapping()
         mapping.loadMappings(BufferedReader(srgMapping.reader(Charsets.UTF_8)), null, null, false)
 
@@ -54,12 +54,4 @@ fun minecraftDep(project: Project, vararg accessTransformer: String): String {
         }
     }
     return "me.yuugiri:minecraftbin:1.8.9-${project.rootProject.name}"
-}
-
-fun launchWrapper(project: Project): ConfigurableFileCollection {
-    return project.files(resourceCached(cacheDir(project), "libraries/net/minecraft/launchwrapper/1.12/launchwrapper-1.12.jar", "https://ayanoyuugiri.github.io/resources/libs/net/minecraft/launchwrapper/1.12/launchwrapper-1.12.jar"))
-}
-
-fun minecraftforge(project: Project): ConfigurableFileCollection {
-    return project.files(resourceCached(cacheDir(project), "libraries/net/me.yuugiri.fluiditygradle.tasks.minecraftforge/forge/1.8.9-11.15.1.2318-1.8.9/forge-1.8.9-11.15.1.2318-1.8.9.jar", "https://ayanoyuugiri.github.io/resources/libs/net/minecraftforge/forge/1.8.9-11.15.1.2318-1.8.9/forge-1.8.9-11.15.1.2318-1.8.9.jar"))
 }
