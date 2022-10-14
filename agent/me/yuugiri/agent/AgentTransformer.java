@@ -109,10 +109,10 @@ public class AgentTransformer implements ClassFileTransformer {
 
     private void tryCallClass(String name) {
         if (parentMap.containsKey(name)) return;
-        try {
-            System.out.println(name);
+//        try {
+//            System.out.println(name);
 //            Class.forName(name.replace('/', '.'));
-        } catch (Throwable t) {}
+//        } catch (Throwable t) {}
     }
 
     private ClassNode readClass(byte[] byArray) {
