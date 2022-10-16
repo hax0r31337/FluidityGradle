@@ -11,7 +11,6 @@ import net.md_5.specialsource.RemapperProcessor
 import net.md_5.specialsource.provider.JarProvider
 import net.md_5.specialsource.provider.JointProvider
 import org.gradle.api.Project
-import org.gradle.api.file.ConfigurableFileCollection
 import java.io.BufferedReader
 import java.io.File
 

@@ -6,6 +6,7 @@ import org.objectweb.asm.tree.*;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.InputStream;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
@@ -35,49 +36,49 @@ public class AgentTransformer implements ClassFileTransformer {
         instrumentation.addTransformer(new AgentTransformer());
     }
 
-    public byte[] transform(ClassLoader classLoader, String string, Class<?> clazz, ProtectionDomain protectionDomain, byte[] byArray) {
+    public byte[] transform(ClassLoader cl, String string, Class<?> clazz, ProtectionDomain protectionDomain, byte[] byArray) {
         ClassNode classNode = this.readClass(byArray);
 
-        {
-            ArrayList<String> parent = new ArrayList<>();
-            if (classNode.superName != null && !classNode.superName.equals("java/lang/Object")) {
-                tryCallClass(classNode.superName);
-                parent.add(classNode.superName);
-            }
-            for (Object intf : classNode.interfaces) {
-                String str = (String) intf;
-                tryCallClass(str);
-                parent.add(str);
-            }
-            parentMap.put(classNode.name, parent);
-        }
+        readParents(classNode);
 
         for (int i = 0; i < classNode.methods.size(); ++i) {
             MethodNode methodNode = (MethodNode)classNode.methods.get(i);
-            methodNode.name = getMergedMap(classNode.name).getWithFallback(methodNode.name+methodNode.desc, methodNode.name);
+            methodNode.name = getMergedMap(cl, classNode.name).getWithFallback(methodNode.name+methodNode.desc, methodNode.name);
             for (int j = 0; j < methodNode.instructions.size(); ++j) {
                 AbstractInsnNode ain = methodNode.instructions.get(j);
                 if (ain instanceof MethodInsnNode) {
                     MethodInsnNode min = (MethodInsnNode) ain;
-                    min.name = getMergedMap(min.owner).getWithFallback(min.name+min.desc, min.name);
+                    min.name = getMergedMap(cl, min.owner).getWithFallback(min.name+min.desc, min.name);
                 } else if (ain instanceof FieldInsnNode) {
                     FieldInsnNode fin = (FieldInsnNode) ain;
-                    fin.name = getMergedMap(fin.owner).getWithFallback(fin.name, fin.name);
+                    fin.name = getMergedMap(cl, fin.owner).getWithFallback(fin.name, fin.name);
                 }
             }
         }
         return this.writeClass(classNode);
     }
 
+    private void readParents(ClassNode classNode) {
+        ArrayList<String> parent = new ArrayList<>();
+        if (classNode.superName != null && !classNode.superName.equals("java/lang/Object")) {
+            parent.add(classNode.superName);
+        }
+        for (Object intf : classNode.interfaces) {
+            String str = (String) intf;
+            parent.add(str);
+        }
+        parentMap.put(classNode.name, parent);
+    }
+
     private final HashMap<String, ArrayList<String>> parentMap = new HashMap<>();
     private final HashMap<String, MergedMap> mergedMaps = new HashMap<>();
     private final MergedMap emptyMap = new MergedMap(new ArrayList<>());
 
-    private MergedMap getMergedMap(String name) {
+    private MergedMap getMergedMap(ClassLoader cl, String name) {
         if (mergedMaps.containsKey(name)) {
             return mergedMaps.get(name);
         }
-        List<String> parents = parentTree(name);
+        List<String> parents = parentTree(cl, name);
         MergedMap mm;
         if (parents.isEmpty()) {
             mm = emptyMap;
@@ -94,25 +95,32 @@ public class AgentTransformer implements ClassFileTransformer {
         return mm;
     }
 
-    private List<String> parentTree(String name) {
+    private List<String> parentTree(ClassLoader cl, String name) {
         ArrayList<String> list = new ArrayList<>();
 
         list.add(name);
+        tryCallClass(cl, name);
         if (!parentMap.containsKey(name)) return list;
         for (String str : parentMap.get(name)) {
 //            if (str.equals("java/lang/Object")) continue;
-            list.addAll(parentTree(str));
+            list.addAll(parentTree(cl, str));
         }
 
         return list;
     }
 
-    private void tryCallClass(String name) {
+    private void tryCallClass(ClassLoader cl, String name) {
         if (parentMap.containsKey(name)) return;
-//        try {
-//            System.out.println(name);
-//            Class.forName(name.replace('/', '.'));
-//        } catch (Throwable t) {}
+        if (obfMap.containsKey(name)) return;
+        try {
+            InputStream is = cl.getResourceAsStream(name+".class");
+            if (is == null) return;
+            byte[] targetArray = new byte[is.available()];
+            is.read(targetArray);
+
+            ClassNode cn = readClass(targetArray);
+            readParents(cn);
+        } catch (Throwable ignored) {}
     }
 
     private ClassNode readClass(byte[] byArray) {
