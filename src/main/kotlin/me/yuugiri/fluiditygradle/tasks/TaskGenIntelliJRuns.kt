@@ -26,7 +26,7 @@ import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
 
 
-open class TaskGenIntelliJRuns : GroupedTask() {
+open class TaskGenIntelliJRuns : TaskGrouped() {
 
     @get:Input
     open var vmParams = ""

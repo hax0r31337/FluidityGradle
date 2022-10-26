@@ -89,7 +89,7 @@ fun generateReobfuscateMapping(project: Project): Map<String, Map<String, String
     return result
 }
 
-open class TaskReobfuscateArtifact : GroupedTask() {
+open class TaskReobfuscateArtifact : TaskGrouped() {
 
     @get:Internal
     val mapping by lazy { generateReobfuscateMapping(project) }

@@ -7,14 +7,13 @@ import java.io.File
 import java.io.FileOutputStream
 import java.util.zip.GZIPOutputStream
 
-open class TaskPutObfuscationMap: GroupedTask() {
+open class TaskPutObfuscationMap: TaskGrouped() {
 
     @TaskAction
     fun execute() {
-        val resourceDir = File(project.buildDir, "resources/main")
-        if (!resourceDir.exists()) {
-            logger.error("no resource directory found")
-            return
+        val resourceDir = File(project.buildDir, "resources/main").also {
+            if (!it.exists())
+                it.mkdirs()
         }
         val cacheDir = cacheDir(project)
 

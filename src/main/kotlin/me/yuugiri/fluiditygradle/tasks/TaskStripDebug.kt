@@ -14,14 +14,7 @@ import java.util.jar.JarEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
-abstract class GroupedTask : DefaultTask() {
-
-    init {
-        group = "minecraft"
-    }
-}
-
-abstract class TaskClassPatching : GroupedTask() {
+abstract class TaskClassPatching : TaskGrouped() {
 
     @get:Internal
     protected abstract val patcher: (ClassNode) -> Unit

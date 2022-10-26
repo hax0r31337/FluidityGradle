@@ -7,7 +7,7 @@ import org.gradle.api.tasks.TaskAction
 /**
  * used to refresh access transformer
  */
-open class TaskRemoveMinecraftJarCache : GroupedTask() {
+open class TaskRemoveMinecraftJarCache : TaskGrouped() {
 
     @TaskAction
     fun execute() {

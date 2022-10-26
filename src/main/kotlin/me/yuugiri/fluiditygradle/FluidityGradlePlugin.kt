@@ -13,5 +13,6 @@ class FluidityGradlePlugin : Plugin<Project> {
         project.tasks.register("stripDebug", TaskStripDebug::class.java)
         project.tasks.register("reobfJarWithStrip", TaskStripDebugAndReobfuscate::class.java)
         project.tasks.register("putObfMap", TaskPutObfuscationMap::class.java)
+        project.tasks.register("putGitInfo", TaskPutGitInfo::class.java)
     }
 }
